@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Globe, Gift, Users, CheckCircle, AlertTriangle, Zap, Rocket, Star, Play } from 'lucide-react';
 import { supabase } from './lib/supabase';
+import { SupabaseTest } from './components/SupabaseTest';
 
 // Define LeadForm component outside of App to prevent recreation on each render
 const LeadForm = ({ 
@@ -165,14 +166,21 @@ function App() {
 
       setIsSubmitted(true);
       console.log('Form submitted successfully to Supabase:', data);
+      console.log('Inserted record ID:', data?.[0]?.id);
       
       // Reset form after 3 seconds
       setTimeout(() => {
         setIsSubmitted(false);
         setFormData({ name: '', email: '' });
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form to Supabase:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       // Still show success to user to avoid confusion
       setIsSubmitted(true);
       
@@ -495,6 +503,9 @@ function App() {
           </p>
         </div>
       </footer>
+
+      {/* Supabase Test Panel - only visible in development */}
+      {import.meta.env.DEV && <SupabaseTest />}
     </div>
   );
 }
