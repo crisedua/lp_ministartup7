@@ -1,132 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Globe, Gift, Users, CheckCircle, AlertTriangle, Zap, Rocket, Star, Play } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Clock, MapPin } from 'lucide-react';
 import { supabase } from './lib/supabase';
-import { SupabaseTest } from './components/SupabaseTest';
-
-// Define LeadForm component outside of App to prevent recreation on each render
-const LeadForm = ({ 
-  className = "", 
-  buttonText = "QUIERO MI LUGAR EN EL WEBINAR",
-  formData,
-  handleInputChange,
-  handleSubmit,
-  isSubmitted,
-  isSubmitting
-}: {
-  className?: string;
-  buttonText?: string;
-  formData: { name: string; email: string };
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  isSubmitted: boolean;
-  isSubmitting: boolean;
-}) => (
-  <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
-    <div>
-      <input
-        type="text"
-        name="name"
-        placeholder="Tu nombre completo"
-        value={formData.name}
-        onChange={handleInputChange}
-        required
-        disabled={isSubmitting}
-        className="w-full px-6 py-4 text-lg text-black placeholder-gray-500 bg-white border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      />
-    </div>
-    <div>
-      <input
-        type="email"
-        name="email"
-        placeholder="Tu mejor email"
-        value={formData.email}
-        onChange={handleInputChange}
-        required
-        disabled={isSubmitting}
-        className="w-full px-6 py-4 text-lg text-black placeholder-gray-500 bg-white border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      />
-    </div>
-    <button
-      type="submit"
-      disabled={isSubmitting}
-      className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xl font-bold py-5 px-8 rounded-xl hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-    >
-      {isSubmitted ? '✅ ¡LUGAR RESERVADO!' : isSubmitting ? '⏳ RESERVANDO...' : buttonText}
-    </button>
-    {isSubmitted && (
-      <div className="text-center">
-        <p className="text-green-600 font-semibold text-lg mb-2">
-          ¡Perfecto! Tu lugar está reservado.
-        </p>
-        <p className="text-gray-600">
-          Te enviaremos los detalles de acceso por email.
-        </p>
-      </div>
-    )}
-  </form>
-);
-
-// Move CountdownTimer component outside of App to prevent recreation on each render
-const CountdownTimer = () => {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    // Target date: July 12, 2025, 11:00 AM Chile time (UTC-4)
-    const targetDate = new Date('2025-07-12T11:00:00-04:00');
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const distance = targetDate.getTime() - now;
-
-      if (distance > 0) {
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        setTimeLeft({ days, hours, minutes, seconds });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 mb-8">
-      <div className="text-center mb-4">
-        <h3 className="text-2xl font-bold text-yellow-300 mb-2">⏰ El evento comienza en:</h3>
-      </div>
-      <div className="grid grid-cols-4 gap-4 text-center">
-        <div className="bg-white bg-opacity-20 rounded-xl p-4">
-          <div className="text-3xl md:text-4xl font-bold text-white">{timeLeft.days}</div>
-          <div className="text-sm text-gray-200 uppercase tracking-wide">Días</div>
-        </div>
-        <div className="bg-white bg-opacity-20 rounded-xl p-4">
-          <div className="text-3xl md:text-4xl font-bold text-white">{timeLeft.hours}</div>
-          <div className="text-sm text-gray-200 uppercase tracking-wide">Horas</div>
-        </div>
-        <div className="bg-white bg-opacity-20 rounded-xl p-4">
-          <div className="text-3xl md:text-4xl font-bold text-white">{timeLeft.minutes}</div>
-          <div className="text-sm text-gray-200 uppercase tracking-wide">Min</div>
-        </div>
-        <div className="bg-white bg-opacity-20 rounded-xl p-4">
-          <div className="text-3xl md:text-4xl font-bold text-white">{timeLeft.seconds}</div>
-          <div className="text-sm text-gray-200 uppercase tracking-wide">Seg</div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function App() {
   const [formData, setFormData] = useState({
@@ -147,6 +21,11 @@ function App() {
     e.preventDefault();
     setIsSubmitting(true);
     
+    // Track form submission start
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Lead');
+    }
+    
     try {
       const { data, error } = await supabase
         .from('signups')
@@ -154,8 +33,8 @@ function App() {
           {
             name: formData.name,
             email: formData.email,
-            event: 'No-Code + AI Webinar',
-            date: '2025-07-12T11:00:00-04:00',
+            event: 'Webinar MVP - Eduardo Escalante',
+            date: '2024-08-19T11:00:00-04:00',
             timestamp: new Date().toISOString()
           }
         ]);
@@ -165,347 +44,259 @@ function App() {
       }
 
       setIsSubmitted(true);
-      console.log('Form submitted successfully to Supabase:', data);
-      console.log('Inserted record ID:', data?.[0]?.id);
       
-      // Reset form after 3 seconds
+      // Track successful registration
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          content_name: 'Webinar MVP Registration',
+          status: 'success'
+        });
+      }
+      
+      // Reset form after 5 seconds
       setTimeout(() => {
         setIsSubmitted(false);
         setFormData({ name: '', email: '' });
-      }, 3000);
+      }, 5000);
     } catch (error: any) {
-      console.error('Error submitting form to Supabase:', error);
-      console.error('Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-      // Still show success to user to avoid confusion
+      console.error('Error submitting form:', error);
       setIsSubmitted(true);
       
-      // Reset form after 3 seconds
       setTimeout(() => {
         setIsSubmitted(false);
         setFormData({ name: '', email: '' });
-      }, 3000);
+      }, 5000);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative container mx-auto px-4 py-16 lg:py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="mb-6 inline-flex items-center bg-orange-500 text-white px-6 py-2 rounded-full text-lg font-semibold">
-              <Rocket className="w-5 h-5 mr-2" />
-              🚀 Evento Exclusivo Gratuito
-            </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              🚀 Cómo crear tu propio{' '}
-              <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
-                producto digital
-              </span>{' '}
-              sin escribir una sola línea de código
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background with gradient and business people silhouettes effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-800 via-purple-900 to-purple-950"></div>
+      
+      {/* Decorative background pattern to simulate business people silhouettes */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-10 left-10 w-20 h-20 bg-white rounded-full opacity-10"></div>
+        <div className="absolute top-32 right-20 w-16 h-16 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-20 left-32 w-24 h-24 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-40 right-16 w-18 h-18 bg-white rounded-full opacity-10"></div>
+        <div className="absolute top-1/3 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute top-2/3 right-1/3 w-14 h-14 bg-white rounded-full opacity-10"></div>
+      </div>
+
+      {/* Orange ribbon */}
+      <div className="absolute top-0 right-0 transform rotate-45 translate-x-20 -translate-y-10">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-16 py-3 shadow-lg">
+          <span className="font-bold text-sm">Evento 100% Online - Cupos limitados</span>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 container mx-auto px-4 py-12 min-h-screen flex items-center">
+        <div className="max-w-4xl mx-auto text-center">
+          
+          {/* Main headline */}
+          <div className="mb-12">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-light text-white leading-tight mb-6">
+              ¿Sigues <span className="font-normal">postergando</span>
             </h1>
-            <h2 className="text-xl md:text-2xl lg:text-3xl mb-8 opacity-90 leading-relaxed">
-              (Incluso si no eres técnico)
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-orange-500 leading-tight mb-6">
+              tu idea
             </h2>
-            <p className="text-lg md:text-xl mb-12 opacity-80 max-w-3xl mx-auto">
-              La Inteligencia Artificial y el No-Code están eliminando las barreras. 
-              Si tienes una idea, te muestro cómo puedes lanzarla en días, no en meses.
+            <h3 className="text-5xl md:text-7xl lg:text-8xl font-light text-white leading-tight">
+              de negocio?
+            </h3>
+          </div>
+
+          {/* Subtitle */}
+          <div className="mb-12">
+            <p className="text-xl md:text-2xl lg:text-3xl text-white mb-2">
+              Te invito a este <span className="font-bold">webinar gratuito</span>
             </p>
-            
-            {/* Countdown Timer */}
-            <CountdownTimer />
-            
-            <div className="max-w-md mx-auto">
-              <LeadForm 
-                formData={formData}
-                handleInputChange={handleInputChange}
-                handleSubmit={handleSubmit}
-                isSubmitted={isSubmitted}
-                isSubmitting={isSubmitting}
-              />
-            </div>
+            <p className="text-xl md:text-2xl lg:text-3xl text-white mb-2">
+              donde te muestro <span className="font-bold">cómo crear tu MVP</span>
+            </p>
+            <p className="text-xl md:text-2xl lg:text-3xl text-white mb-2">
+              y empezar a vender en solo 4 semanas,
+            </p>
+            <p className="text-xl md:text-2xl lg:text-3xl text-white font-bold">
+              sin ser programador y sin gastar una fortuna.
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* Context Section */}
-      <section className="py-16 lg:py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
-                🌎 Estamos en un momento histórico
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-orange-500 to-red-500 mx-auto rounded-full"></div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="text-left">
-                <p className="text-xl md:text-2xl text-gray-700 mb-6 leading-relaxed">
-                  Lo que antes requería equipos de programadores, 
-                  <span className="font-bold text-orange-600"> ahora lo haces tú desde tu casa</span>.
-                </p>
-                <p className="text-xl md:text-2xl text-gray-700 leading-relaxed">
-                  2025 ya está aquí, y quienes no entiendan este cambio, 
-                  <span className="font-bold text-red-600"> se van a quedar atrás</span>.
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-2xl shadow-lg">
-                <div className="text-center">
-                  <Zap className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">La Revolución Está Aquí</h3>
-                  <p className="text-gray-600">
-                    Millones ya están aprovechando estas herramientas. 
-                    ¿Vas a ser uno de ellos o vas a quedarte viendo?
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* CTA Button */}
+          <div className="mb-12">
+            <button 
+              onClick={() => {
+                // Track CTA button click
+                if (typeof window !== 'undefined' && (window as any).fbq) {
+                  (window as any).fbq('track', 'InitiateCheckout', {
+                    content_name: 'Main CTA Button',
+                    content_category: 'Registration'
+                  });
+                }
+                document.getElementById('registration-form')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xl md:text-2xl font-bold py-4 px-12 rounded-full transform hover:scale-105 transition-all duration-200 shadow-2xl hover:shadow-orange-500/25"
+            >
+              RESERVA TU LUGAR AHORA
+            </button>
           </div>
-        </div>
-      </section>
 
-      {/* Invitation Section */}
-      <section className="py-16 lg:py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
-                Este sábado, te invito a un entrenamiento 
-                <span className="text-orange-600"> 100% gratuito</span> donde:
-              </h2>
+          {/* Event details */}
+          <div className="grid md:grid-cols-3 gap-6 text-white text-lg">
+            <div className="flex items-center justify-center space-x-3">
+              <Calendar className="w-6 h-6 text-orange-500" />
+              <span className="font-bold">Sábado 19 de agosto</span>
             </div>
-            <div className="grid md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl">
-                <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  ✅ Demo en Vivo
-                </h3>
-                <p className="text-gray-700">
-                  Vas a ver en vivo cómo se crea un producto digital sin programar
-                </p>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-center space-x-3">
+                <Clock className="w-6 h-6 text-orange-500" />
+                <span>11:00 AM Chile, Argentina, Uruguay</span>
               </div>
-              <div className="bg-gradient-to-br from-orange-50 to-red-50 p-8 rounded-2xl">
-                <Star className="w-12 h-12 text-orange-500 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  ✅ Herramientas Revolucionarias
-                </h3>
-                <p className="text-gray-700">
-                  Te mostraré las herramientas que están revolucionando el mercado
-                </p>
+              <div className="flex items-center justify-center space-x-3">
+                <Clock className="w-6 h-6 text-orange-500" />
+                <span>10:00 AM Perú, Colombia, Ecuador, Bolivia</span>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl">
-                <Users className="w-12 h-12 text-green-500 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  ✅ Casos Reales
-                </h3>
-                <p className="text-gray-700">
-                  Aprenderás cómo personas comunes están generando libertad financiera con IA + No-Code
-                </p>
+              <div className="flex items-center justify-center space-x-3">
+                <Clock className="w-6 h-6 text-orange-500" />
+                <span>9:00 AM México</span>
+              </div>
+            </div>
+
+            {/* Speaker info */}
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-orange-500">
+                <img 
+                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face&auto=format" 
+                  alt="Eduardo Escalante"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="text-center">
+                <h4 className="text-xl font-bold text-white">Eduardo Escalante</h4>
+                <p className="text-gray-300 italic">Especialista en Automatización con IA</p>
               </div>
             </div>
           </div>
         </div>
-      </section>
+             </div>
 
-      {/* Video Section */}
-      <section className="py-16 lg:py-20 bg-gradient-to-br from-gray-900 to-black text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-                📱 Se encerró en una habitación, creó 17 aplicaciones y vendió 2 por{' '}
-                <span className="text-green-400">$265,000</span>
-              </h2>
-              <p className="text-xl md:text-2xl text-gray-300 mb-8">
-                Mira esta historia real de cómo el No-Code está cambiando vidas
-              </p>
-            </div>
-            
-            <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl">
+       {/* Video Section */}
+       <section className="relative z-10 bg-gray-900 py-16">
+         <div className="container mx-auto px-4 max-w-5xl">
+           <div className="text-center mb-12">
+             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+               📱 Mira esta historia real sobre{' '}
+               <span className="text-orange-500">crear productos digitales</span>
+             </h2>
+             <p className="text-xl md:text-2xl text-gray-300 mb-8">
+               Descubre cómo el No-Code está transformando la manera de crear negocios
+             </p>
+           </div>
+           
+                       <div 
+              className="relative bg-black rounded-2xl overflow-hidden shadow-2xl cursor-pointer"
+              onClick={() => {
+                // Track video engagement
+                if (typeof window !== 'undefined' && (window as any).fbq) {
+                  (window as any).fbq('track', 'ViewContent', {
+                    content_name: 'Webinar Preview Video',
+                    content_type: 'video'
+                  });
+                }
+              }}
+            >
               <div className="aspect-video">
                 <iframe
-                  src="https://www.youtube.com/embed/4hMg_CZauJs"
-                  title="Se encerró en una habitación, creó 17 aplicaciones y vendió 2 por $265,000"
+                  src="https://www.youtube.com/embed/yK6NY7Jkg8s"
+                  title="Video sobre crear productos digitales"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                   className="w-full h-full"
                 ></iframe>
               </div>
             </div>
-            
-            <div className="text-center mt-8">
-              <p className="text-lg md:text-xl text-gray-300 mb-6">
-                Esta es solo una de las miles de historias de éxito que están sucediendo ahora mismo.
-              </p>
-              <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full text-lg font-semibold">
-                <Play className="w-5 h-5 mr-2" />
-                El sábado verás cómo tú también puedes hacerlo
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+           
+           <div className="text-center mt-8">
+             <p className="text-lg md:text-xl text-gray-300 mb-6">
+               Esta es solo una de las miles de historias de éxito que están sucediendo ahora mismo.
+             </p>
+             <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-full text-lg font-semibold">
+               ▶️ En el webinar verás cómo tú también puedes hacerlo
+             </div>
+           </div>
+         </div>
+       </section>
 
-      {/* Scarcity Section */}
-      <section className="py-16 lg:py-20 bg-gradient-to-r from-red-600 to-orange-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <AlertTriangle className="w-16 h-16 mx-auto mb-6 text-yellow-300" />
-            <h2 className="text-3xl md:text-5xl font-bold mb-8">
-              ⚠️ Importante:
+       {/* Registration Form Section */}
+       <section id="registration-form" className="relative z-10 bg-white py-16">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              Reserva tu lugar ahora
             </h2>
-            <div className="bg-black bg-opacity-20 p-8 rounded-2xl mb-8">
-              <p className="text-2xl md:text-3xl font-bold mb-4">
-                Este evento no se grabará.
-              </p>
-              <p className="text-xl md:text-2xl mb-6">
-                Es en vivo, práctico y solo para quienes estén listos para aprovechar esta oportunidad.
-              </p>
-            </div>
-            <p className="text-xl md:text-2xl opacity-90">
-              La mayoría sigue pensando "mañana empiezo"... y ese "mañana" se convierte en 
-              <span className="font-bold"> nunca</span>.
+            <p className="text-xl text-gray-600">
+              Es 100% gratuito y solo tomará 30 segundos
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* Social Proof Section */}
-      <section className="py-16 lg:py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-12">
-              🔧 Ya cientos de creadores en Latinoamérica están usando No-Code + IA para:
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-white p-8 rounded-2xl shadow-lg transform hover:scale-105 transition-transform">
-                <div className="text-4xl mb-4">📱</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  ✨ Lanzar apps desde cero
-                </h3>
-                <p className="text-gray-600">
-                  Sin necesidad de equipos de desarrollo ni años de estudio
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-2xl shadow-lg transform hover:scale-105 transition-transform">
-                <div className="text-4xl mb-4">💰</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  ✨ Crear negocios digitales
-                </h3>
-                <p className="text-gray-600">
-                  Sin invertir miles de dólares en desarrollo tradicional
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-2xl shadow-lg transform hover:scale-105 transition-transform">
-                <div className="text-4xl mb-4">🚀</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  ✨ Validar ideas
-                </h3>
-                <p className="text-gray-600">
-                  Sin ser programadores ni tener conocimientos técnicos
-                </p>
-              </div>
-            </div>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">
-              Este sábado tú puedes ser uno de ellos.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 lg:py-20 bg-gradient-to-br from-orange-500 to-red-500 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-5xl font-bold mb-8">
-              👉 Reserva tu lugar gratis
-            </h2>
-            <p className="text-xl md:text-2xl mb-12 opacity-90">
-              Los cupos son limitados. Si quieres ver con tus propios ojos cómo se crea un producto digital real, 
-              sin programar, deja tus datos ahora.
-            </p>
-            <div className="bg-white p-8 rounded-2xl shadow-2xl">
-              <LeadForm 
-                className="text-gray-900"
-                formData={formData}
-                handleInputChange={handleInputChange}
-                handleSubmit={handleSubmit}
-                isSubmitted={isSubmitted}
-                isSubmitting={isSubmitting}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Event Details Section */}
-      <section className="py-16 lg:py-20 bg-gray-900 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-              Detalles del Evento
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8 mb-12">
-              <div className="text-center bg-gray-800 p-8 rounded-2xl">
-                <Calendar className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">🗓️ Fecha</h3>
-                <p className="text-lg">Sábado 12 de Julio</p>
-                <p className="text-lg">11:00 AM (Hora Chile)</p>
-              </div>
-              <div className="text-center bg-gray-800 p-8 rounded-2xl">
-                <Globe className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">🌐 Modalidad</h3>
-                <p className="text-lg">Online - Desde cualquier lugar</p>
-                <p className="text-lg">Zoom en vivo</p>
-              </div>
-              <div className="text-center bg-gray-800 p-8 rounded-2xl">
-                <Gift className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">🎁 Inversión</h3>
-                <p className="text-lg">Sin costo</p>
-                <p className="text-lg">Solo necesitas conexión a internet</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl md:text-3xl font-bold mb-6">
-                ¿Listo para ver lo que puedes construir?
-              </p>
-              <p className="text-xl opacity-90">
-                Deja tus datos y nos vemos en el entrenamiento.
+          {isSubmitted ? (
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-8 text-center">
+              <div className="text-green-600 text-6xl mb-4">✅</div>
+              <h3 className="text-2xl font-bold text-green-800 mb-2">
+                ¡Lugar reservado exitosamente!
+              </h3>
+              <p className="text-green-700 text-lg">
+                Te enviaremos todos los detalles de acceso por email.
               </p>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Tu nombre completo"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                  className="w-full px-6 py-4 text-lg text-gray-800 placeholder-gray-500 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:bg-white focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Tu mejor email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                  className="w-full px-6 py-4 text-lg text-gray-800 placeholder-gray-500 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:bg-white focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xl font-bold py-5 px-8 rounded-xl transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isSubmitting ? '⏳ RESERVANDO TU LUGAR...' : 'RESERVA TU LUGAR AHORA'}
+              </button>
+            </form>
+          )}
+
+          <div className="mt-8 text-center text-gray-500 text-sm">
+            <p>🔒 Tus datos están seguros. No compartimos tu información.</p>
           </div>
         </div>
       </section>
-
-      {/* Sticky Mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-orange-500 to-red-500 p-4 shadow-2xl z-50 md:hidden">
-        <button 
-          onClick={() => document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' })}
-          className="w-full bg-white text-orange-600 font-bold py-3 px-6 rounded-xl text-lg hover:bg-gray-100 transition-colors"
-        >
-          RESERVAR MI LUGAR GRATIS
-        </button>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-black text-white py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            © 2025 - Webinar No-Code + IA. Todos los derechos reservados.
-          </p>
-        </div>
-      </footer>
-
-      {/* Supabase Test Panel - only visible in development */}
-      {import.meta.env.DEV && <SupabaseTest />}
     </div>
   );
 }
