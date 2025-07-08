@@ -166,21 +166,6 @@ function App() {
                 <span>9:00 AM México</span>
               </div>
             </div>
-
-            {/* Speaker info */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-orange-500">
-                <img 
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face&auto=format" 
-                  alt="Eduardo Escalante"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="text-center">
-                <h4 className="text-xl font-bold text-white">Eduardo Escalante</h4>
-                <p className="text-gray-300 italic">Especialista en Automatización con IA</p>
-              </div>
-            </div>
           </div>
         </div>
              </div>
